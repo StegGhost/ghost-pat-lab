@@ -1,4 +1,4 @@
-name: Ghost PAT: Logbook
+name: "Ghost PAT Logbook"
 
 on:
   workflow_dispatch:
@@ -50,5 +50,6 @@ jobs:
             git add .github/reports/ghost_activity.md
             git commit -m "chore: update ghost activity log"
             git push
-          else:
+          else
             echo "No changes to commit."
+          fi
