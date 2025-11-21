@@ -1,0 +1,53 @@
+name: Ghost PAT: Boundaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_repo_full_name:
+        description: "Full repo name to test (e.g. StegGhost/ghost-pat-lab)"
+        required: true
+
+jobs:
+  ghost-boundaries:
+    runs-on: ubuntu-latest
+
+    env:
+      GHOST_PAT: ${{ secrets.GH_GHOST_PAT }}
+      TEST_REPO: ${{ github.event.inputs.test_repo_full_name }}
+
+    steps:
+      - name: Check PAT presence
+        run: |
+          if [ -z "$GHOST_PAT" ]; then
+            echo "❌ GH_GHOST_PAT is not set. Add it as a repo secret."
+            exit 1
+          else
+            echo "✅ GH_GHOST_PAT is set (value is masked)."
+          fi
+
+      - name: Show test target
+        run: |
+          echo "Testing access to repo: $TEST_REPO"
+
+      - name: Test GET /repos/{owner}/{repo}
+        run: |
+          url="https://api.github.com/repos/$TEST_REPO"
+          echo "GET $url"
+          status=$(curl -s -o /tmp/repo.txt -w "%{http_code}" \
+            -H "Authorization: token $GHOST_PAT" \
+            "$url")
+          echo "HTTP status: $status"
+          head -c 400 /tmp/repo.txt || true
+          echo
+
+          if [ "$status" = "200" ]; then
+            echo "✅ PAT can see this repo."
+          elif [ "$status" = "403" ]; then
+            echo "❌ 403 Forbidden: PAT authenticated, but not allowed to see this repo."
+          elif [ "$status" = "404" ]; then
+            echo "❌ 404 Not Found: Repo does not exist or PAT has no visibility."
+          elif [ "$status" = "401" ]; then
+            echo "❌ 401 Unauthorized: PAT invalid or expired."
+          else
+            echo "⚠️ Unexpected status: $status"
+          fi
