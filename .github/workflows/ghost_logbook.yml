@@ -1,0 +1,54 @@
+name: Ghost PAT: Logbook
+
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: "Short note to append to the ghost activity log"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  ghost-logbook:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Append to ghost activity report
+        env:
+          USER_NOTE: ${{ github.event.inputs.note }}
+        run: |
+          mkdir -p .github/reports
+          report=".github/reports/ghost_activity.md"
+          ts="$(date -u +"%Y-%m-%d %H:%M:%SZ")"
+
+          echo "Updating report at $report"
+          {
+            echo "## Ghost Activity Entry — ${ts}"
+            echo
+            echo "- Workflow run: \`${GITHUB_WORKFLOW}\`"
+            echo "- Run ID: \`${GITHUB_RUN_ID}\`"
+            echo "- Repo: \`${GITHUB_REPOSITORY}\`"
+            echo "- Note: ${USER_NOTE}"
+            echo
+            echo "---"
+            echo
+          } >> "$report"
+
+      - name: Commit and push report
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "stegghost-bot"
+          git config user.email "stegghost-bot@users.noreply.github.com"
+          git status
+          if ! git diff --quiet; then
+            git add .github/reports/ghost_activity.md
+            git commit -m "chore: update ghost activity log"
+            git push
+          else:
+            echo "No changes to commit."
