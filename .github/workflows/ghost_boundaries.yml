@@ -1,4 +1,4 @@
-name: Ghost PAT: Boundaries
+name: "Ghost PAT Boundaries"
 
 on:
   workflow_dispatch:
@@ -10,7 +10,6 @@ on:
 jobs:
   ghost-boundaries:
     runs-on: ubuntu-latest
-
     env:
       GHOST_PAT: ${{ secrets.GH_GHOST_PAT }}
       TEST_REPO: ${{ github.event.inputs.test_repo_full_name }}
