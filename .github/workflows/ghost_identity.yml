@@ -1,0 +1,45 @@
+name: Ghost PAT: Identity
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  ghost-identity:
+    runs-on: ubuntu-latest
+
+    env:
+      GHOST_PAT: ${{ secrets.GH_GHOST_PAT }}
+
+    steps:
+      - name: Check PAT presence
+        run: |
+          if [ -z "$GHOST_PAT" ]; then
+            echo "❌ GH_GHOST_PAT is not set. Add it as a repo secret."
+            exit 1
+          else
+            echo "✅ GH_GHOST_PAT is set (value is masked)."
+          fi
+
+      - name: Show PAT identity via /user
+        run: |
+          status=$(curl -s -o /tmp/resp.txt -w "%{http_code}" \
+            -H "Authorization: token $GHOST_PAT" \
+            https://api.github.com/user)
+
+          echo "HTTP status: $status"
+          echo "Response (truncated to 600 chars):"
+          head -c 600 /tmp/resp.txt || true
+          echo
+
+          if [ "$status" = "200" ]; then
+            echo "✅ PAT is valid and authenticated."
+          elif [ "$status" = "401" ]; then
+            echo "❌ 401 Unauthorized: PAT invalid, expired, or mis-pasted."
+            exit 1
+          elif [ "$status" = "403" ]; then
+            echo "❌ 403 Forbidden: PAT is blocked from /user (unusual)."
+            exit 1
+          else
+            echo "⚠️ Unexpected status: $status"
+            exit 1
+          fi
