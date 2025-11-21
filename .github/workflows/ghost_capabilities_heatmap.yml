@@ -1,0 +1,51 @@
+name: Ghost PAT: Capabilities Heatmap
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  ghost-heatmap:
+    runs-on: ubuntu-latest
+
+    env:
+      GHOST_PAT: ${{ secrets.GH_GHOST_PAT }}
+
+    steps:
+      - name: Check PAT presence
+        run: |
+          if [ -z "$GHOST_PAT" ]; then
+            echo "❌ GH_GHOST_PAT is not set. Add it as a repo secret."
+            exit 1
+          else
+            echo "✅ GH_GHOST_PAT is set (value is masked)."
+          fi
+
+      - name: Call /user
+        run: |
+          echo "=== /user ==="
+          status=$(curl -s -o /tmp/user.txt -w "%{http_code}" \
+            -H "Authorization: token $GHOST_PAT" \
+            https://api.github.com/user)
+          echo "HTTP status: $status"
+          head -c 400 /tmp/user.txt || true
+          echo
+
+      - name: Call /user/repos (first page)
+        run: |
+          echo "=== /user/repos ==="
+          status=$(curl -s -o /tmp/repos.txt -w "%{http_code}" \
+            -H "Authorization: token $GHOST_PAT" \
+            "https://api.github.com/user/repos?per_page=50")
+          echo "HTTP status: $status"
+          head -c 400 /tmp/repos.txt || true
+          echo
+
+      - name: Call /rate_limit
+        run: |
+          echo "=== /rate_limit ==="
+          status=$(curl -s -o /tmp/rl.txt -w "%{http_code}" \
+            -H "Authorization: token $GHOST_PAT" \
+            https://api.github.com/rate_limit)
+          echo "HTTP status: $status"
+          head -c 400 /tmp/rl.txt || true
+          echo
