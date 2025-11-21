@@ -1,4 +1,4 @@
-name: Ghost PAT: Capabilities Heatmap
+name: "Ghost PAT Capabilities Heatmap"
 
 on:
   workflow_dispatch: {}
@@ -6,7 +6,6 @@ on:
 jobs:
   ghost-heatmap:
     runs-on: ubuntu-latest
-
     env:
       GHOST_PAT: ${{ secrets.GH_GHOST_PAT }}
 
