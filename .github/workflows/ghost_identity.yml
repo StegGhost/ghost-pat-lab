@@ -1,4 +1,4 @@
-name: Ghost PAT: Identity
+name: "Ghost PAT Identity"
 
 on:
   workflow_dispatch: {}
@@ -6,7 +6,6 @@ on:
 jobs:
   ghost-identity:
     runs-on: ubuntu-latest
-
     env:
       GHOST_PAT: ${{ secrets.GH_GHOST_PAT }}
 
